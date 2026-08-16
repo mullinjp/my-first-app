@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>♪ 幼稚園のお時間ちゃん ♪</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', 'Comic Sans MS', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* 昼夜テーマのグラデーション定義 */
+        .bg-morning {
+            background: linear-gradient(135deg, #ffd1ff 0%, #fad0c4 50%, #fff1eb 100%);
+        }
+        .bg-day {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+        .bg-evening {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        }
+        .bg-night {
+            background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+        }
+
+        /* アニメーション */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 2.5s infinite ease-in-out;
+        }
+
+        @keyframes talk-mouth {
+            0%, 100% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1.2); }
+        }
+        .talking-mouth {
+            animation: talk-mouth 0.25s infinite ease-in-out;
+            transform-origin: center;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 105, 180, 0.7); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 20px rgba(255, 105, 180, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 105, 180, 0); }
+        }
+        .pulse-btn {
+            animation: pulse-ring 2s infinite;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(10px);
+            border: 4px solid rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-morning min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 transition-all duration-1000 text-slate-800">
+
+    <!-- ヘッダー -->
+    <header class="w-full max-w-md flex justify-between items-center mb-2">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl">🌸</span>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-pink-600 drop-shadow-sm">幼稚園のお時間ちゃん</h1>
+        </div>
+        <button id="voiceToggleBtn" class="bg-white/80 hover:bg-white text-pink-600 px-3 py-1.5 rounded-full font-bold text-xs shadow-md border border-pink-200 flex items-center gap-1 transition">
+            <i class="fa-solid font-bold fa-wand-magic-sparkles text-amber-400"></i>
+            <span id="voiceModeLabel">AIボイス</span>
+        </button>
+    </header>
+
+    <!-- メインコンテンツカード -->
+    <main class="w-full max-w-md glass-panel rounded-3xl p-5 shadow-2xl flex flex-col items-center relative overflow-hidden my-auto">
+        
+        <!-- 背景装飾アイコン (時間帯で動的変化) -->
+        <div id="bgDecor" class="absolute -top-4 -right-4 text-7xl opacity-20 pointer-events-none select-none">
+            ☀️
+        </div>
+
+        <!-- タブナビゲーション -->
+        <nav class="grid grid-cols-4 gap-1 w-full mb-4 bg-pink-100/70 p-1.5 rounded-2xl text-xs font-bold">
+            <button onclick="switchTab('clock')" id="tab-clock" class="py-2 rounded-xl transition bg-white text-pink-600 shadow-sm">
+                <i class="fa-regular fa-clock text-base block mb-0.5"></i>とけい
+            </button>
+            <button onclick="switchTab('quiz')" id="tab-quiz" class="py-2 rounded-xl transition text-slate-500 hover:text-pink-600">
+                <i class="fa-solid fa-graduation-cap text-base block mb-0.5"></i>クイズ
+            </button>
+            <button onclick="switchTab('timer')" id="tab-timer" class="py-2 rounded-xl transition text-slate-500 hover:text-pink-600">
+                <i class="fa-solid fa-hourglass-half text-base block mb-0.5"></i>タイマー
+            </button>
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="py-2 rounded-xl transition text-slate-500 hover:text-pink-600">
+                <i class="fa-solid fa-calendar-check text-base block mb-0.5"></i>せいかつ
+            </button>
+        </nav>
+
+        <!-- キャラクター（お時間ちゃん） -->
+        <div class="relative cursor-pointer group my-1" onclick="onAvatarTap()">
+            <div id="avatarContainer" class="w-36 h-36 sm:w-44 sm:h-44 relative animate-bounce-slow">
+                <!-- SVG お時間ちゃんイラスト -->
+                <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-md">
+                    <!-- 髪の毛（後ろ） -->
+                    <path d="M 40,110 Q 30,170 60,180 Q 100,185 140,180 Q 170,170 160,110 Z" fill="#654321"/>
+                    
+                    <!-- 顔 -->
+                    <circle cx="100" cy="100" r="60" fill="#FFE0BD"/>
+                    
+                    <!-- 前髪 -->
+                    <path d="M 40,85 Q 70,55 100,80 Q 130,55 160,85 Q 100,30 40,85 Z" fill="#654321"/>
+                    <!-- 黄色い大きなリボン -->
+                    <path d="M 60,40 Q 100,55 140,40 Q 150,20 100,35 Q 50,20 60,40 Z" fill="#FFD700"/>
+                    <circle cx="100" cy="36" r="10" fill="#FF8C00"/>
+
+                    <!-- ほっぺ -->
+                    <circle cx="62" cy="112" r="12" fill="#FFB6C1" opacity="0.8"/>
+                    <circle cx="138" cy="112" r="12" fill="#FFB6C1" opacity="0.8"/>
+
+                    <!-- 目 (通常) -->
+                    <g id="eyesNormal">
+                        <ellipse cx="72" cy="98" rx="7" ry="10" fill="#333"/>
+                        <circle cx="70" cy="95" r="3" fill="#FFF"/>
+                        <ellipse cx="128" cy="98" rx="7" ry="10" fill="#333"/>
+                        <circle cx="126" cy="95" r="3" fill="#FFF"/>
+                    </g>
+                    <!-- 目 (笑顔) -->
+                    <g id="eyesHappy" class="hidden">
+                        <path d="M 63,98 Q 72,88 81,98" stroke="#333" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <path d="M 119,98 Q 128,88 137,98" stroke="#333" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    </g>
+
+                    <!-- 口 (通常) -->
+                    <path id="mouthNormal" d="M 88,122 Q 100,132 112,122" stroke="#D2691E" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <!-- 口 (おしゃべり中アニメーション用) -->
+                    <ellipse id="mouthTalking" cx="100" cy="124" rx="10" ry="8" fill="#FF6B6B" class="hidden"/>
+                </svg>
+            </div>
+            <!-- キャラクターの吹出吹き出しバッジ -->
+            <div id="speechStatus" class="absolute -bottom-2 bg-pink-500 text-white font-bold text-xs px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center gap-1">
+                <i class="fa-solid fa-comment-dots"></i> タップしておはなし！
+            </div>
+        </div>
+
+        <!-- テキスト吹き出しメッセージ -->
+        <div class="w-full bg-white/90 border-2 border-pink-200 rounded-2xl p-3 my-3 text-center shadow-inner min-h-[60px] flex items-center justify-center">
+            <p id="speechBubbleText" class="text-sm sm:text-base font-extrabold text-pink-700 leading-snug">
+                「ぽんっ！」ボタンを押すと、今のお時間を教えてあげるよ♪
+            </p>
+        </div>
+
+        <!-- タブ 1: 時計モード -->
+        <div id="section-clock" class="w-full flex flex-col items-center">
+            <!-- リアルタイムデジタル時計表示 -->
+            <div class="bg-gradient-to-r from-pink-500 to-rose-400 text-white rounded-2xl py-3 px-6 shadow-md text-center my-2 w-full border-2 border-white/80">
+                <div id="digitalClock" class="text-3xl sm:text-4xl font-black tracking-wider drop-shadow">
+                    --時 --分 --秒
+                </div>
+                <div id="timePeriodLabel" class="text-xs font-bold text-pink-100 mt-0.5">
+                    読み込み中...
+                </div>
+            </div>
+
+            <!-- 音声再生メインボタン -->
+            <button id="speakBtn" onclick="onMainSpeakClick()" class="pulse-btn w-48 h-20 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-95 text-white font-extrabold text-2xl rounded-full shadow-xl my-3 flex items-center justify-center gap-2 transition border-4 border-white">
+                <span>ぽんっ！</span>
+                <i class="fa-solid fa-volume-high text-xl"></i>
+            </button>
+        </div>
+
+        <!-- タブ 2: クイズモード -->
+        <div id="section-quiz" class="w-full flex flex-col items-center hidden">
+            <div class="text-center w-full mb-2">
+                <span class="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">これ、なんじかな？</span>
+            </div>
+            
+            <!-- アナログ時計 (Canvas) -->
+            <div class="relative my-2">
+                <canvas id="quizClockCanvas" width="160" height="160" class="bg-white rounded-full shadow-md border-4 border-pink-300"></canvas>
+            </div>
+
+            <!-- クイズの選択肢ボタン -->
+            <div id="quizOptions" class="grid grid-cols-2 gap-2 w-full mt-2">
+                <!-- JSで動的生成 -->
+            </div>
+            <button onclick="generateQuiz()" class="mt-3 text-xs font-bold text-pink-600 underline hover:text-pink-800">
+                <i class="fa-solid fa-rotate-right"></i> べつのもんだい
+            </button>
+        </div>
+
+        <!-- タブ 3: タイマーモード -->
+        <div id="section-timer" class="w-full flex flex-col items-center hidden">
+            <div class="text-xs font-bold text-slate-500 mb-2">おかたづけやハミガキに使ってね！</div>
+            <div id="timerDisplay" class="text-4xl font-black text-pink-600 bg-pink-50 px-8 py-2 rounded-2xl border-2 border-pink-200 shadow-inner my-1">
+                01:00
+            </div>
+            
+            <!-- プリセット時間ボタン -->
+            <div class="flex gap-2 my-3">
+                <button onclick="setTimerPreset(60)" class="bg-white border-2 border-pink-300 text-pink-600 hover:bg-pink-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm">1分</button>
+                <button onclick="setTimerPreset(180)" class="bg-white border-2 border-pink-300 text-pink-600 hover:bg-pink-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm">3分</button>
+                <button onclick="setTimerPreset(300)" class="bg-white border-2 border-pink-300 text-pink-600 hover:bg-pink-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm">5分</button>
+            </div>
+
+            <div class="flex gap-3 w-full">
+                <button id="timerStartBtn" onclick="toggleTimer()" class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-extrabold py-2.5 rounded-xl shadow-md text-sm">
+                    スタート！
+                </button>
+                <button onclick="resetTimer()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm">
+                    リセット
+                </button>
+            </div>
+        </div>
+
+        <!-- タブ 4: せいかつリズムモード -->
+        <div id="section-schedule" class="w-full flex flex-col items-center hidden">
+            <div class="text-xs font-bold text-slate-500 mb-2">幼稚園の一日をおはなしするよ！</div>
+            <div class="grid grid-cols-2 gap-2 w-full text-xs font-bold">
+                <button onclick="speakSchedule('朝ごはん', 'あさ7時！あさごはんをモグモグ食べて元気にしゅっぱーつ！')" class="bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 text-amber-800 p-2.5 rounded-xl flex items-center gap-2 text-left shadow-sm">
+                    <span class="text-xl">🍞</span>
+                    <div><div>7:00</div><div class="text-[10px] font-normal text-amber-600">朝ごはん</div></div>
+                </button>
+                <button onclick="speakSchedule('お弁当の時間', 'ひる12時！たのしいお弁当とおひるごはんの時間だよ！')" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-800 p-2.5 rounded-xl flex items-center gap-2 text-left shadow-sm">
+                    <span class="text-xl">🍱</span>
+                    <div><div>12:00</div><div class="text-[10px] font-normal text-orange-600">お弁当</div></div>
+                </button>
+                <button onclick="speakSchedule('おやつの時間', '午後3時！やったー！楽しみにしていたおやつの時間だよ！')" class="bg-pink-50 hover:bg-pink-100 border-2 border-pink-200 text-pink-800 p-2.5 rounded-xl flex items-center gap-2 text-left shadow-sm">
+                    <span class="text-xl">🍰</span>
+                    <div><div>15:00</div><div class="text-[10px] font-normal text-pink-600">おやつ</div></div>
+                </button>
+                <button onclick="speakSchedule('おふろとおやすみ', 'よる8時！お風呂に入っておふとんに入ろうね。おやすみなさい♪')" class="bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 text-indigo-800 p-2.5 rounded-xl flex items-center gap-2 text-left shadow-sm">
+                    <span class="text-xl">🌙</span>
+                    <div><div>20:00</div><div class="text-[10px] font-normal text-indigo-600">おやすみ</div></div>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="text-center text-xs text-slate-600 font-bold mt-2">
+        <span>💕 幼稚園のお時間ちゃん 💕</span>
+    </footer>
+
+    <!-- カスタム通知モーダル (alert代替) -->
+    <div id="customModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl border-4 border-pink-300">
+            <div id="modalIcon" class="text-4xl mb-2">🎉</div>
+            <h3 id="modalTitle" class="text-lg font-extrabold text-pink-600 mb-2">タイトル</h3>
+            <p id="modalMessage" class="text-sm font-bold text-slate-700 mb-4">メッセージ内容</p>
+            <button onclick="closeModal()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-extrabold py-2 rounded-full shadow-md text-sm">
+                わかった！
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 設定・状態変数 ---
+        const apiKey = ""; // Runtime Gemini API Key
+        let useGeminiVoice = true; // デフォルトはGemini TTS優先
+        let isSpeaking = false;
+        let audioContext = null;
+
+        // タイマー状態
+        let timerSeconds = 60;
+        let timerInterval = null;
+
+        // クイズ状態
+        let currentQuizHour = 0;
+        let currentQuizMinute = 0;
+
+        // --- 初期化 ---
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            initWebSpeechVoices();
+            generateQuiz();
+
+            // 音声をオンにするボタンの切り替え
+            document.getElementById('voiceToggleBtn').addEventListener('click', toggleVoiceMode);
+        });
+
+        // Web Audio API サウンド効果の作成
+        function playSound(type) {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                const now = audioContext.currentTime;
+
+                if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.12); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.24); // G5
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(190, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'chime') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(440, now + 0.8);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
+                    osc.start(now);
+                    osc.stop(now + 0.8);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        // --- タブ切替 ---
+        function switchTab(tabName) {
+            playSound('pop');
+            ['clock', 'quiz', 'timer', 'schedule'].forEach(t => {
+                const section = document.getElementById(`section-${t}`);
+                const tabBtn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    section.classList.remove('hidden');
+                    tabBtn.className = "py-2 rounded-xl transition bg-white text-pink-600 shadow-sm font-extrabold";
+                } else {
+                    section.classList.add('hidden');
+                    tabBtn.className = "py-2 rounded-xl transition text-slate-500 hover:text-pink-600";
+                }
+            });
+            if (tabName === 'quiz') {
+                generateQuiz();
+            }
+        }
+
+        // --- 音声モード切替 ---
+        function toggleVoiceMode() {
+            useGeminiVoice = !useGeminiVoice;
+            const label = document.getElementById('voiceModeLabel');
+            if (useGeminiVoice) {
+                label.textContent = "AIボイス";
+                showSpeechText("AIリアルボイスモードにしたよ！おしゃべりしてみてね♪");
+            } else {
+                label.textContent = "標準ボイス";
+                showSpeechText("ブラウザ標準ボイスモードにしたよ！");
+            }
+            playSound('pop');
+        }
+
+        // --- リアルタイム時計更新 & テーマ切替 ---
+        function updateClock() {
+            const now = new Date();
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+
+            // デジタル表示
+            const pad = (n) => String(n).padStart(2, '0');
+            document.getElementById('digitalClock').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+            // 時間帯の判定と背景変化
+            const body = document.body;
+            const periodLabel = document.getElementById('timePeriodLabel');
+            const bgDecor = document.getElementById('bgDecor');
+
+            body.className = "min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 transition-all duration-1000 text-slate-800 ";
+
+            if (h >= 6 && h < 11) {
+                body.classList.add('bg-morning');
+                periodLabel.textContent = "さわやかな 朝（あさ）";
+                bgDecor.textContent = "🌅";
+            } else if (h >= 11 && h < 17) {
+                body.classList.add('bg-day');
+                periodLabel.textContent = "たのしい 昼（ひる）";
+                bgDecor.textContent = "☀️";
+            } else if (h >= 17 && h < 19) {
+                body.classList.add('bg-evening');
+                periodLabel.textContent = "きれいな 夕方（ゆうがた）";
+                bgDecor.textContent = "🌆";
+            } else {
+                body.classList.add('bg-night');
+                periodLabel.textContent = "静かな 夜（よる）";
+                bgDecor.textContent = "🌙";
+            }
+        }
+
+        // --- キャラクターアニメーション制御 ---
+        function setAvatarExpression(happy = false, talking = false) {
+            const eyesNormal = document.getElementById('eyesNormal');
+            const eyesHappy = document.getElementById('eyesHappy');
+            const mouthNormal = document.getElementById('mouthNormal');
+            const mouthTalking = document.getElementById('mouthTalking');
+
+            if (happy) {
+                eyesNormal.classList.add('hidden');
+                eyesHappy.classList.remove('hidden');
+            } else {
+                eyesNormal.classList.remove('hidden');
+                eyesHappy.classList.add('hidden');
+            }
+
+            if (talking) {
+                mouthNormal.classList.add('hidden');
+                mouthTalking.classList.remove('hidden');
+                mouthTalking.classList.add('talking-mouth');
+            } else {
+                mouthNormal.classList.remove('hidden');
+                mouthTalking.classList.add('hidden');
+                mouthTalking.classList.remove('talking-mouth');
+            }
+        }
+
+        function showSpeechText(text) {
+            document.getElementById('speechBubbleText').textContent = text;
+        }
+
+        function onAvatarTap() {
+            playSound('pop');
+            const greetings = [
+                "ハーイ！お時間ちゃんだよ！なにか用かな？",
+                "えへへ、つっつかないで〜！くすぐったいよ〜！",
+                "時計のお勉強、いっしょにがんばろうね！",
+                "今日もげんきいっぱい遊ぼうね！"
+            ];
+            const randomMsg = greetings[Math.floor(Math.random() * greetings.length)];
+            speakText(randomMsg, "Say cheerfully in a cute energetic Japanese child voice:");
+        }
+
+        // --- メイン時計読み上げボタン ---
+        function onMainSpeakClick() {
+            const now = new Date();
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+
+            let timeAdvice = "";
+            if (h >= 6 && h < 9) timeAdvice = "あさごはんをしっかり食べてね！";
+            else if (h >= 11 && h < 13) timeAdvice = "おいしいごはんの時間かな？";
+            else if (h >= 15 && h < 16) timeAdvice = "おやつの時間だよ！何食べる？";
+            else if (h >= 18 && h < 20) timeAdvice = "お風呂に入ってさっぱりしようね！";
+            else if (h >= 21 || h < 6) timeAdvice = "よい子はお布団に入って寝る時間だよ〜。";
+            else timeAdvice = "今日も元気にすごそうね！";
+
+            const speechText = `いまは ${h}時 ${m}分 ${s}秒 です！ ${timeAdvice}`;
+            speakText(speechText, "Say cheerfully in a cute kindergarten child voice in Japanese:");
+        }
+
+        // --- 生活リズムボタン ---
+        function speakSchedule(title, text) {
+            playSound('pop');
+            speakText(text, "Say delightfully in a cute Japanese preschool girl voice:");
+        }
+
+        // --- 音声合成（Gemini 2.5 Flash TTS + Fallback Web Speech） ---
+        async function speakText(text, promptInstruction = "Say cheerfully in a cute Japanese kindergarten girl voice:") {
+            if (isSpeaking) return;
+            isSpeaking = true;
+
+            showSpeechText(text);
+            setAvatarExpression(true, true);
+
+            if (useGeminiVoice) {
+                try {
+                    const audioUrl = await fetchGeminiTTS(text, promptInstruction);
+                    if (audioUrl) {
+                        const audio = new Audio(audioUrl);
+                        audio.onended = () => {
+                            setAvatarExpression(false, false);
+                            isSpeaking = false;
+                        };
+                        audio.onerror = () => {
+                            fallbackWebSpeech(text);
+                        };
+                        await audio.play();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Gemini TTS Failed, falling back to Web Speech:", e);
+                }
+            }
+
+            // Fallback
+            fallbackWebSpeech(text);
+        }
+
+        // Gemini TTS API 呼び出し
+        async function fetchGeminiTTS(text, instruction) {
+            const fullPrompt = `${instruction} "${text}"`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: fullPrompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: {
+                                voiceName: "Kore" // 可愛く明るい女性・子供風ボイス
+                            }
+                        }
+                    }
+                }
+            };
+
+            let delay = 1000;
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+                    const data = await res.json();
+
+                    const inlineData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+                    if (inlineData && inlineData.data) {
+                        const mimeType = inlineData.mimeType || "audio/L16;rate=24000";
+                        let sampleRate = 24000;
+                        const match = mimeType.match(/rate=(\d+)/);
+                        if (match) sampleRate = parseInt(match[1], 10);
+
+                        const binaryString = atob(inlineData.data);
+                        const pcmBytes = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            pcmBytes[i] = binaryString.charCodeAt(i);
+                        }
+
+                        const wavBlob = pcmToWav(pcmBytes, sampleRate);
+                        return URL.createObjectURL(wavBlob);
+                    }
+                    throw new Error("No inline audio data found");
+                } catch (err) {
+                    if (attempt === 4) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+            return null;
+        }
+
+        // PCM 16bit to WAV Blob 変換処理
+        function pcmToWav(pcmBytes, sampleRate = 24000) {
+            const buffer = new ArrayBuffer(44 + pcmBytes.length);
+            const view = new DataView(buffer);
+
+            const writeString = (v, offset, str) => {
+                for (let i = 0; i < str.length; i++) {
+                    v.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcmBytes.length, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM format
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcmBytes.length, true);
+
+            const wavBytes = new Uint8Array(buffer, 44);
+            wavBytes.set(pcmBytes);
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        // Web Speech API フォールバック
+        let jpVoices = [];
+        function initWebSpeechVoices() {
+            if ('speechSynthesis' in window) {
+                const loadVoices = () => {
+                    jpVoices = speechSynthesis.getVoices().filter(v => v.lang.includes('ja'));
+                };
+                loadVoices();
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+
+        function fallbackWebSpeech(text) {
+            if (!('speechSynthesis' in window)) {
+                setAvatarExpression(false, false);
+                isSpeaking = false;
+                return;
+            }
+
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            const cuteVoice = jpVoices.find(v =>
+                v.name.toLowerCase().includes('female') ||
+                v.name.toLowerCase().includes('yumi') ||
+                v.name.toLowerCase().includes('haruka') ||
+                v.name.toLowerCase().includes('kyoko')
+            ) || jpVoices[0];
+
+            if (cuteVoice) utterance.voice = cuteVoice;
+            utterance.pitch = 1.4; // 幼稚園児風の高めピッチ
+            utterance.rate = 1.05;
+
+            utterance.onend = () => {
+                setAvatarExpression(false, false);
+                isSpeaking = false;
+            };
+            utterance.onerror = () => {
+                setAvatarExpression(false, false);
+                isSpeaking = false;
+            };
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // --- クイズモードロジック ---
+        function generateQuiz() {
+            // ちょうどの時間または半（30分）をランダム生成
+            currentQuizHour = Math.floor(Math.random() * 12) + 1;
+            currentQuizMinute = Math.random() < 0.5 ? 0 : 30;
+
+            drawClock(currentQuizHour, currentQuizMinute);
+
+            // 選択肢作成 (正解1個 + ダミー3個)
+            const correctText = `${currentQuizHour}時${currentQuizMinute === 0 ? '' : 'はん'}`;
+            const choices = new Set([correctText]);
+
+            while (choices.size < 4) {
+                const randomH = Math.floor(Math.random() * 12) + 1;
+                const randomM = Math.random() < 0.5 ? 0 : 30;
+                choices.add(`${randomH}時${randomM === 0 ? '' : 'はん'}`);
+            }
+
+            const shuffled = Array.from(choices).sort(() => Math.random() - 0.5);
+            const container = document.getElementById('quizOptions');
+            container.innerHTML = '';
+
+            shuffled.forEach(optionText => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white hover:bg-pink-100 border-2 border-pink-300 text-pink-700 font-extrabold py-2 rounded-xl text-sm shadow-sm transition active:scale-95";
+                btn.textContent = optionText;
+                btn.onclick = () => checkQuizAnswer(optionText, correctText);
+                container.appendChild(btn);
+            });
+
+            showSpeechText("時計の針を見てね！この時計は「なんじ」かな？");
+        }
+
+        function drawClock(hour, minute) {
+            const canvas = document.getElementById('quizClockCanvas');
+            const ctx = canvas.getContext('2d');
+            const radius = canvas.width / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(radius, radius);
+
+            // 文字盤外枠
+            ctx.beginPath();
+            ctx.arc(0, 0, radius - 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#FFB6C1';
+            ctx.stroke();
+
+            // 数字描画
+            ctx.font = 'bold 14px "M PLUS Rounded 1c", sans-serif';
+            ctx.fillStyle = '#FF1493';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+            for (let num = 1; num <= 12; num++) {
+                const ang = num * Math.PI / 6;
+                ctx.rotate(ang);
+                ctx.translate(0, -radius + 22);
+                ctx.rotate(-ang);
+                ctx.fillText(num.toString(), 0, 0);
+                ctx.rotate(ang);
+                ctx.translate(0, radius - 22);
+                ctx.rotate(-ang);
+            }
+
+            // 短針 (時針)
+            const hourAngle = ((hour % 12) + minute / 60) * (Math.PI / 6);
+            ctx.save();
+            ctx.rotate(hourAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -radius * 0.45);
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#FF1493';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.restore();
+
+            // 長針 (分針)
+            const minuteAngle = minute * (Math.PI / 30);
+            ctx.save();
+            ctx.rotate(minuteAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -radius * 0.68);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#4169E1';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.restore();
+
+            // 中心円
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function checkQuizAnswer(selected, correct) {
+            if (selected === correct) {
+                playSound('correct');
+                speakText(`大正解！すごーい！${correct}だよ！`, "Say with extreme joy and excitement in a cute Japanese girl voice:");
+                setTimeout(generateQuiz, 2500);
+            } else {
+                playSound('wrong');
+                speakText(`おしい！もういっかい挑戦してみてね！`, "Say encouragingly in a gentle cute Japanese girl voice:");
+            }
+        }
+
+        // --- タイマーモードロジック ---
+        function setTimerPreset(sec) {
+            playSound('pop');
+            resetTimer();
+            timerSeconds = sec;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timerSeconds / 60);
+            const s = timerSeconds % 60;
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('timerDisplay').textContent = `${pad(m)}:${pad(s)}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerStartBtn');
+            if (timerInterval) {
+                // 一時停止
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.textContent = "再開する！";
+                btn.className = "flex-1 bg-pink-500 hover:bg-pink-600 text-white font-extrabold py-2.5 rounded-xl shadow-md text-sm";
+            } else {
+                // スタート
+                playSound('pop');
+                btn.textContent = "一時停止";
+                btn.className = "flex-1 bg-amber-500 hover:bg-amber-600 text-white font-extrabold py-2.5 rounded-xl shadow-md text-sm";
+
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        btn.textContent = "スタート！";
+                        btn.className = "flex-1 bg-pink-500 hover:bg-pink-600 text-white font-extrabold py-2.5 rounded-xl shadow-md text-sm";
+                        playSound('chime');
+                        openModal("🎉 お時間だよ！", "ピッピッピッ！時間になりました！とってもよく頑張ったね！");
+                        speakText("時間になったよー！おかたづけ・ハミガキできたかな？えらいね！", "Say cheerfully and proudly in a cute Japanese preschool voice:");
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            playSound('pop');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerSeconds = 60;
+            updateTimerDisplay();
+            const btn = document.getElementById('timerStartBtn');
+            btn.textContent = "スタート！";
+            btn.className = "flex-1 bg-pink-500 hover:bg-pink-600 text-white font-extrabold py-2.5 rounded-xl shadow-md text-sm";
+        }
+
+        // --- カスタムモーダル ---
+        function openModal(title, msg) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = msg;
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            playSound('pop');
+            document.getElementById('customModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
